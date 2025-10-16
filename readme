@@ -1,0 +1,148 @@
+# 🚗 Spark Streaming Analytics - Hands-on L9
+
+**Student:** Gaurav Patel  
+**Course:** ITCS 6190/8190 - Cloud Computing for Data Analysis  
+**Semester:** Fall 2025  
+
+---
+
+## 📘 Project Overview
+This project implements a **real-time analytics pipeline** for a ride-sharing platform using **Apache Spark Structured Streaming**.  
+The system processes live ride data streams, performs aggregations, and analyzes trends using time-based windows.
+
+---
+
+## 🏗️ Architecture
+
+**Components:**
+- **Data Generator:** Python script simulating real-time ride data via socket (`localhost:9999`)  
+- **Processing Engine:** Apache Spark Structured Streaming  
+- **Output:** CSV files containing aggregated results  
+
+**Flow Diagram:**
+Data Generator (Socket Stream)
+↓
+Spark Structured Streaming
+↓
+Real-Time Aggregations
+↓
+CSV Output (Driver & Windowed Results)
+
+
+---
+
+## ⚙️ Task Implementations
+
+### **Task 1: Basic Streaming Ingestion and Parsing**
+**Objective:** Ingest and parse JSON ride data from socket stream  
+
+**Approach:**
+- Connected to socket stream on `localhost:9999`  
+- Defined schema with fields: `trip_id`, `driver_id`, `distance_km`, `fare_amount`, `timestamp`  
+- Parsed incoming JSON messages into a structured DataFrame  
+- Displayed parsed data to console in real-time  
+
+**Sample Output:**
++--------------------+---------+-----------+-----------+-------------------+
+|             trip_id|driver_id|distance_km|fare_amount|          timestamp|
++--------------------+---------+-----------+-----------+-------------------+
+|9c57889d-a31a-43d...|       90|      24.36|      26.77|2025-10-15 23:35:36|
+|0ab508ec-ec54-480...|       22|       3.26|       6.80|2025-10-15 23:35:37|
+|87394453-17bb-46f...|       89|      16.46|     109.83|2025-10-15 23:35:38|
++--------------------+---------+-----------+-----------+-------------------+
+
+
+---
+
+### **Task 2: Real-Time Driver-Level Aggregations**
+**Objective:** Calculate total fare and average distance per driver in real-time  
+
+**Approach:**
+- Grouped streaming data by `driver_id`  
+- Computed `SUM(fare_amount)` as **total_fare**  
+- Computed `AVG(distance_km)` as **avg_distance**  
+- Used **complete output mode** for continuous aggregation updates  
+- Wrote results to CSV files with checkpointing  
+
+**Sample Output (`outputs/task2/`):**
+driver_id,total_fare,avg_distance
+69,87.04,36.68
+59,101.44,46.41
+96,49.54,38.93
+26,83.40,24.93
+38,114.35,7.21
+
+
+**Key Insights:**
+- 🥇 **Driver 59** earned the highest fare ($101.44) with longest average distance (46.41 km)  
+- 💰 **Driver 38** earned $114.35 with shortest average distance (7.21 km) — **high fare efficiency**
+
+---
+
+### **Task 3: Windowed Time-Based Analytics**
+**Objective:** Aggregate fare amounts using 5-minute sliding windows  
+
+**Approach:**
+- Converted timestamp string to proper `TimestampType`  
+- Applied **1-minute watermark** for late data handling  
+- Created **5-minute tumbling window** with **1-minute slide interval**  
+- Aggregated `SUM(fare_amount)` per time window  
+- Used **append output mode** for finalized window results  
+
+**Sample Output (`outputs/task3/`):**
+window_start,window_end,sum_fare
+2025-10-15T23:45:00.000Z,2025-10-15T23:50:00.000Z,7111.25
+2025-10-15T23:44:00.000Z,2025-10-15T23:49:00.000Z,2662.35
+2025-10-15T23:46:00.000Z,2025-10-15T23:51:00.000Z,8243.17
+```
+
+**Key Insights:**
+- Peak revenue window: 23:46-23:51 with $8,243.17 in total fares
+- Windows show varying ride activity patterns over time
+- Most output files are empty initially (expected behavior - windows need 5 minutes of data)
+
+---
+
+## Project Structure
+```
+Handson-L8-Spark-SQL_Streaming/
+├── task1.py                    # Streaming ingestion script
+├── task2.py                    # Driver aggregation script
+├── task3.py                    # Windowed analytics script
+├── data_generator.py           # Simulates ride data stream
+├── outputs/
+│   ├── task2/                  # Driver aggregation results (3 sample CSVs)
+│   └── task3/                  # Windowed analytics results (3 sample CSVs)
+└── README.md
+
+
+
+---
+
+## 🧠 How to Run
+
+### **1️⃣ Start the Data Generator (Terminal 1)**
+```bash
+python data_generator.py
+
+Run Desired Task (Terminal 2)
+
+python task1.py   # View parsed stream
+python task2.py   # Generate driver aggregations (run 30–40s)
+python task3.py   # Generate windowed analytics (run 6–7 mins)
+
+## Technologies Used
+
+Apache Spark 3.x - Structured Streaming
+Python 3.x - Application logic
+PySpark - Spark Python API
+Faker - Synthetic data generation
+
+
+## Results Summary
+
+1. Successfully ingested and parsed 480+ streaming records across all tasks
+2. Generated real-time driver performance metrics with continuous updates
+3. Implemented 5-minute sliding window aggregations with proper watermarking
+4. All output files generated and validated with sample data
+
